@@ -64,7 +64,10 @@ func Build(ctx context.Context, base, target []byte, blockSize int) (*Built, err
 			pos += ln
 			continue
 		}
-		data := target[pos : pos+1]
+		// Copy the byte so the op owns its data. Slicing target directly
+		// would alias the caller's buffer; a later mutation of target would
+		// leak into Apply/ApplyDelta replay via op.Data.
+		data := []byte{target[pos]}
 		ops = append(ops, Op{Kind: OpInsert, Data: data})
 		hunks = append(hunks, Hunk{
 			Index:     hunkIdx,
